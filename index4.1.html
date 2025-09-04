@@ -1,37 +1,68 @@
 <!DOCTYPE html>
-<html lang="th">
-  <head>
-    <meta charset="UTF-8">
-    <title>Markerless AR ง่าย ๆ</title>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  </head>
-  <body style="margin:0; overflow:hidden;">
-    <a-scene
-        xrweb
-        webxr="requiredFeatures: hit-test; optionalFeatures: local-floor;"
-        embedded>
-      
-      <!-- วัตถุ 3D -->
-      <a-box id="box" position="0 0 -1" rotation="0 45 0" color="#4CC3D9" scale="0.2 0.2 0.2"></a-box>
-      
-      <!-- กล้อง -->
-      <a-camera></a-camera>
-    </a-scene>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Markerless AR with Camera Toggle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin:0; background:#222; display:flex; flex-direction:column; height:100vh; }
+    #controls { position:absolute; top:10px; left:10px; z-index:10; }
+    button { padding:6px 12px; border:none; border-radius:6px; background:#007bff; color:#fff; margin-right:5px; }
+    model-viewer { flex:1; width:100%; height:100%; }
+  </style>
+</head>
+<body>
 
-    <script>
-      const box = document.querySelector('#box');
-      const scene = document.querySelector('a-scene');
+<div id="controls">
+  <button id="toggleCam">Toggle Camera</button>
+</div>
 
-      // วาง box หน้ากล้องเมื่อแตะหน้าจอ
-      scene.addEventListener('click', () => {
-        const cam = scene.camera.el;
-        const camPos = cam.getAttribute('position');
-        box.setAttribute('position', {
-          x: camPos.x,
-          y: camPos.y - 0.5,
-          z: camPos.z - 1
-        });
-      });
-    </script>
-  </body>
+<model-viewer id="mv"
+              src="./scene.gltf"
+              alt="3D model"
+              camera-controls
+              auto-rotate
+              ar>
+</model-viewer>
+
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+<script>
+const mv = document.getElementById('mv');
+let arActive = false;
+
+// Toggle AR session (เปิด/ปิดกล้อง)
+document.getElementById('toggleCam').addEventListener('click', async () => {
+  if (!arActive) {
+    if (mv.canActivateAR) {
+      try {
+        await mv.activateAR(); // เปิด AR → กล้องหลัง
+        arActive = true;
+        console.log('📷 Camera ON (AR active)');
+      } catch(err) {
+        console.error('❌ AR activation failed:', err);
+      }
+    } else {
+      console.warn('AR not available on this device/browser');
+    }
+  } else {
+    try {
+      await mv.deactivateAR(); // ปิด AR → กล้องปิด
+      arActive = false;
+      console.log('📷 Camera OFF (AR deactivated)');
+    } catch(err) {
+      console.error('❌ AR deactivation failed:', err);
+    }
+  }
+});
+
+// Debug
+mv.addEventListener('load', () => console.log('✅ Model loaded'));
+mv.addEventListener('ar-status', e => console.log('🔹 AR status:', e.detail.status));
+mv.addEventListener('error', e => console.error('❌ ModelViewer error:', e.detail));
+</script>
+
+</body>
 </html>
+
+
