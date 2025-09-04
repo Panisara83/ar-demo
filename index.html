@@ -7,32 +7,27 @@
   </head>
   <body style="margin:0; overflow:hidden;">
     <a-scene
+        embedded
         xrweb
-        webxr="requiredFeatures: hit-test; optionalFeatures: local-floor;"
-        embedded>
-      
-      <!-- วัตถุ 3D -->
-      <a-box id="box" position="0 0 -1" rotation="0 45 0" color="#4CC3D9" scale="0.2 0.2 0.2"></a-box>
+        webxr="requiredFeatures: hit-test; optionalFeatures: local-floor;">
       
       <!-- กล้อง -->
       <a-camera></a-camera>
     </a-scene>
 
     <script>
-      const box = document.querySelector('#box');
-      const scene = document.querySelector('a-scene');
+      const scene = document.querySelector("a-scene");
 
-      // วาง box หน้ากล้องเมื่อแตะหน้าจอ
-      scene.addEventListener('click', () => {
-        const cam = scene.camera.el;
-        const camPos = cam.getAttribute('position');
-        box.setAttribute('position', {
-          x: camPos.x,
-          y: camPos.y - 0.5,
-          z: camPos.z - 1
-        });
+      scene.addEventListener("click", () => {
+        // สร้างกล่องเมื่อแตะหน้าจอ
+        const box = document.createElement("a-box");
+        box.setAttribute("color", "blue");
+        box.setAttribute("depth", "0.2");
+        box.setAttribute("height", "0.2");
+        box.setAttribute("width", "0.2");
+        box.setAttribute("position", "0 0 -1"); // วาง 1 เมตรหน้ากล้อง
+        scene.appendChild(box);
       });
     </script>
   </body>
 </html>
-
