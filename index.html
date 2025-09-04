@@ -1,166 +1,65 @@
 <!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <title>Markerless AR Full Debug</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <style>
-    body { margin:0; overflow:hidden; font-family:sans-serif; }
-    #controls {
-      position: absolute; top:10px; left:10px; z-index:10;
-      display:flex; gap:8px; flex-wrap: wrap;
-    }
-    button {
-      padding:6px 12px; border-radius:6px; border:none; background:#007bff; color:#fff; font-size:14px;
-    }
-    #hint {
-      position:absolute; left:10px; right:10px; bottom:12px;
-      background:rgba(0,0,0,0.6); color:#fff; padding:10px;
-      border-radius:8px; text-align:center; font-size:14px; z-index:10;
-    }
-    #debugLog {
-      position:absolute; top:50px; left:10px; max-height:200px; width:95%;
-      overflow:auto; background:rgba(0,0,0,0.6); color:#0f0; padding:10px;
-      border-radius:8px; font-family:monospace; font-size:12px; z-index:10;
-    }
-  </style>
-</head>
+<html lang="en">
+  <head>
+    <title>WebAR Gladiador</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="./styles.css">
+    
+    <!-- The following libraries and polyfills are recommended to maximize browser support -->
+    <!-- NOTE: you must adjust the paths as appropriate for your project -->
+    
+    <!-- 🚨 REQUIRED: Web Components polyfill to support Edge and Firefox < 63 -->
+<!--     <script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.1.3/webcomponents-loader.js"></script> -->
+
+    <!-- 💁 OPTIONAL: Intersection Observer polyfill for better performance in Safari and IE11 -->
+<!--     <script src="https://unpkg.com/intersection-observer@0.5.1/intersection-observer.js"></script> -->
+
+    <!-- 💁 OPTIONAL: Resize Observer polyfill improves resize behavior in non-Chrome browsers -->
+<!--     <script src="https://unpkg.com/resize-observer-polyfill@1.5.0/dist/ResizeObserver.js"></script> -->
+    
+    <!-- 💁 OPTIONAL: The :focus-visible polyfill removes the focus ring for some input types -->
+    <script src="https://unpkg.com/focus-visible@5.0.2/dist/focus-visible.js" defer></script>
+
+  </head> 
 <body>
-  <div id="controls">
-    <button id="startCam">เปิดกล้อง</button>
-    <button id="stopCam">ปิดกล้อง</button>
-    <button id="switchCam">สลับกล้อง</button>
-    <button id="checkDebug">Debug Status</button>
+  <div class="row">
+  <div id="card">
+    <!-- All you need to put beautiful, interactive 3D content on your site: -->
+    <model-viewer src="./scene.gltf"
+            
+                  alt="A 3D model of an Gladiador"
+                  shadow-intensity="1"
+                  camera-controls
+                  auto-rotate ar>
+    </model-viewer>
+    <section class="attribution">
+      <span>
+        <h1>Gladiador</h1>
+        <span>By <a href="https://sketchfab.com/3d-models/gladiador-874fc7e11d674f51a4dc2082d29c9b9a" target="_blank">SketchFab</a></span>
+        <br>
+        <span>Demo by<a href="https://www.antdevelopers.com" target="_blank">ANT Developers</a></span>
+      </span>
+      <a class="cc" href="https://creativecommons.org/licenses/by/2.0/" target="_blank">
+        <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg">
+        <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg">
+      </a>
+    </section>  
   </div>
-  <div id="hint">แตะหน้าจอเพื่อวางโมเดล • Pinch เพื่อขยาย/หมุนสองนิ้ว • ลากนิ้วเดียวเพื่อหมุน</div>
-  <div id="debugLog">[Debug log]</div>
+  </div>
 
-  <a-scene embedded webxr="optionalFeatures: hit-test, local-floor;">
-    <a-entity id="cameraRig">
-      <a-camera id="camera"></a-camera>
-    </a-entity>
+  <!-- 💁 Include both scripts below to support all browsers! -->
 
-    <!-- โมเดลพื้นฐาน -->
-    <a-box id="model" color="#FF0000" depth="0.5" height="0.5" width="0.5"
-           visible="true" position="0 0 -1"></a-box>
+  <!-- Loads <model-viewer> for modern browsers: -->
+  <script type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+  </script>
 
-    <a-sky color="#222"></a-sky>
-  </a-scene>
-
-  <script>
-    const logBox = document.getElementById("debugLog");
-    function log(msg){ console.log(msg); logBox.textContent += "\n"+msg; }
-
-    const cameraEl = document.getElementById('camera');
-    const model = document.getElementById('model');
-    const scene = document.querySelector('a-scene');
-    let placed=false;
-    let stream=null;
-    let usingFrontCamera = false; // false = กล้องหลัง, true = กล้องหน้า
-
-    // -------------------------
-    // ฟังก์ชันเปิดกล้อง
-    async function startCamera(front=false){
-      if(stream){
-        stream.getTracks().forEach(track=>track.stop());
-      }
-      const constraints = {
-        video: { facingMode: front ? "user" : { exact: "environment" } }
-      };
-      try{
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        usingFrontCamera = front;
-        log("✅ กล้อง "+(front?"หน้า":"หลัง")+" เปิดสำเร็จ");
-      }catch(e){
-        log("❌ เปิดกล้องล้มเหลว: "+e.message);
-      }
-    }
-
-    // -------------------------
-    // ปุ่มเปิด/ปิด/สลับกล้อง
-    document.getElementById("startCam").addEventListener("click", ()=>startCamera(usingFrontCamera));
-    document.getElementById("stopCam").addEventListener("click", ()=>{
-      if(stream){
-        stream.getTracks().forEach(track=>track.stop());
-        log("🛑 กล้องถูกปิดแล้ว");
-        stream=null;
-      }else log("⚠️ ยังไม่มีกล้องที่เปิดอยู่");
-    });
-    document.getElementById("switchCam").addEventListener("click", ()=>{
-      startCamera(!usingFrontCamera);
-    });
-
-    // -------------------------
-    // ปุ่ม debug
-    document.getElementById("checkDebug").addEventListener("click", ()=>{
-      log("---- DEBUG STATUS ----");
-      log("📷 Camera active: "+(stream ? "Yes" : "No"));
-      log("🟥 Model visible: "+model.getAttribute("visible"));
-      log("🔹 WebXR: "+(navigator.xr ? "Supported" : "Not Supported"));
-    });
-
-    // -------------------------
-    // วางโมเดลเมื่อแตะ
-    scene.addEventListener("click", ()=>{
-      if(!placed){
-        placeModel();
-        placed=true;
-        log("🟥 Model placed and visible");
-      }
-    });
-
-    function placeModel(){
-      const camObj = cameraEl.object3D;
-      const worldPos = new THREE.Vector3();
-      const worldDir = new THREE.Vector3(0,0,-1);
-      camObj.getWorldPosition(worldPos);
-      camObj.getWorldDirection(worldDir);
-      const targetPos = worldPos.clone().add(worldDir.multiplyScalar(1));
-      targetPos.y = worldPos.y-0.5;
-      model.object3D.position.copy(targetPos);
-    }
-
-    // -------------------------
-    // Gesture หมุน/ขยาย
-    let ongoing={mode:null,startScale:1,startRotY:0,lastX:0,startDist:0,startAngle:0};
-    function dist(t1,t2){return Math.hypot(t1.clientX-t2.clientX,t1.clientY-t2.clientY);}
-    function angle(t1,t2){return Math.atan2(t2.clientY-t1.clientY,t2.clientX-t1.clientX)*180/Math.PI;}
-
-    window.addEventListener("touchstart",(e)=>{
-      if(!placed) return;
-      if(e.touches.length===1){
-        ongoing.mode='one';
-        ongoing.lastX=e.touches[0].clientX;
-        ongoing.startRotY=model.getAttribute('rotation').y;
-      }else if(e.touches.length===2){
-        ongoing.mode='two';
-        ongoing.startDist=dist(e.touches[0],e.touches[1]);
-        ongoing.startScale=model.getAttribute('scale').x;
-        ongoing.startRotY=model.getAttribute('rotation').y;
-        ongoing.startAngle=angle(e.touches[0],e.touches[1]);
-      }
-    },{passive:true});
-
-    window.addEventListener("touchmove",(e)=>{
-      if(!placed) return;
-      e.preventDefault();
-      if(ongoing.mode==='one' && e.touches.length===1){
-        const dx = e.touches[0].clientX - ongoing.lastX;
-        model.setAttribute('rotation',{x:0,y:ongoing.startRotY - dx*0.3,z:0});
-      }else if(ongoing.mode==='two' && e.touches.length===2){
-        const newDist=dist(e.touches[0],e.touches[1]);
-        let scale=ongoing.startScale*(newDist/ongoing.startDist);
-        scale=Math.min(Math.max(scale,0.1),3);
-        model.setAttribute('scale',`${scale} ${scale} ${scale}`);
-        const deltaAngle=angle(e.touches[0],e.touches[1])-ongoing.startAngle;
-        model.setAttribute('rotation',{x:0,y:ongoing.startRotY - deltaAngle,z:0});
-      }
-    },{passive:false});
-
-    window.addEventListener("touchend",()=>{ongoing.mode=null;});
-    window.addEventListener("touchcancel",()=>{ongoing.mode=null;});
-
+  <!-- Loads <model-viewer> for old browsers like IE11: -->
+  <script nomodule
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js">
   </script>
 </body>
 </html>
