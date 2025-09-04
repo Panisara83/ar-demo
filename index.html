@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>Markerless AR Debug</title>
+  <title>Markerless AR Debug - Primitive</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>
@@ -40,11 +40,11 @@
       <a-camera id="camera"></a-camera>
     </a-entity>
 
-    <a-entity id="duckModel" visible="false"
-              gltf-model="url(Duck.gltf)"
-              scale="0.5 0.5 0.5"
-              position="0 0 -1">
-    </a-entity>
+    <!-- โมเดลพื้นฐาน -->
+    <a-box id="model" color="#FF0000" depth="0.5" height="0.5" width="0.5"
+           visible="false" position="0 0 -1"></a-box>
+
+    <a-sky color="#222"></a-sky>
   </a-scene>
 
   <script>
@@ -52,7 +52,7 @@
     function log(msg){ console.log(msg); logBox.textContent += "\n"+msg; }
 
     const cameraEl = document.getElementById('camera');
-    const duck = document.getElementById('duckModel');
+    const model = document.getElementById('model');
     const scene = document.querySelector('a-scene');
     let placed=false;
     let stream=null;
@@ -81,7 +81,7 @@
       log("📷 Camera permission: "+(navigator.permissions ? "Supported" : "Not Supported"));
       log("🔹 WebXR: "+(navigator.xr ? "Supported" : "Not Supported"));
       log("🟢 Camera active: "+(stream ? "Yes" : "No"));
-      log("🦆 Duck model visible: "+duck.getAttribute("visible"));
+      log("🟥 Model visible: "+model.getAttribute("visible"));
     });
 
     // -------------------------
@@ -90,7 +90,7 @@
       if(!placed){
         placeModel();
         placed=true;
-        duck.setAttribute("visible","true");
+        model.setAttribute("visible","true");
       }
     });
 
@@ -102,7 +102,7 @@
       camObj.getWorldDirection(worldDir);
       const targetPos = worldPos.clone().add(worldDir.multiplyScalar(1));
       targetPos.y = worldPos.y-0.5;
-      duck.object3D.position.copy(targetPos);
+      model.object3D.position.copy(targetPos);
     }
 
     // -------------------------
@@ -116,12 +116,12 @@
       if(e.touches.length===1){
         ongoing.mode='one';
         ongoing.lastX=e.touches[0].clientX;
-        ongoing.startRotY=duck.getAttribute('rotation').y;
+        ongoing.startRotY=model.getAttribute('rotation').y;
       }else if(e.touches.length===2){
         ongoing.mode='two';
         ongoing.startDist=dist(e.touches[0],e.touches[1]);
-        ongoing.startScale=duck.getAttribute('scale').x;
-        ongoing.startRotY=duck.getAttribute('rotation').y;
+        ongoing.startScale=model.getAttribute('scale').x;
+        ongoing.startRotY=model.getAttribute('rotation').y;
         ongoing.startAngle=angle(e.touches[0],e.touches[1]);
       }
     },{passive:true});
@@ -131,24 +131,19 @@
       e.preventDefault();
       if(ongoing.mode==='one' && e.touches.length===1){
         const dx = e.touches[0].clientX - ongoing.lastX;
-        duck.setAttribute('rotation',{x:0,y:ongoing.startRotY - dx*0.3,z:0});
+        model.setAttribute('rotation',{x:0,y:ongoing.startRotY - dx*0.3,z:0});
       }else if(ongoing.mode==='two' && e.touches.length===2){
         const newDist=dist(e.touches[0],e.touches[1]);
         let scale=ongoing.startScale*(newDist/ongoing.startDist);
         scale=Math.min(Math.max(scale,0.1),3);
-        duck.setAttribute('scale',`${scale} ${scale} ${scale}`);
+        model.setAttribute('scale',`${scale} ${scale} ${scale}`);
         const deltaAngle=angle(e.touches[0],e.touches[1])-ongoing.startAngle;
-        duck.setAttribute('rotation',{x:0,y:ongoing.startRotY - deltaAngle,z:0});
+        model.setAttribute('rotation',{x:0,y:ongoing.startRotY - deltaAngle,z:0});
       }
     },{passive:false});
 
     window.addEventListener("touchend",()=>{ongoing.mode=null;});
     window.addEventListener("touchcancel",()=>{ongoing.mode=null;});
-
-    // -------------------------
-    // ตรวจสอบโหลดโมเดล
-    duck.addEventListener("model-loaded",()=>log("✅ Duck model loaded"));
-    duck.addEventListener("model-error",(err)=>log("❌ Duck model load error: "+JSON.stringify(err.detail)));
 
   </script>
 </body>
