@@ -1,68 +1,75 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8" />
-  <title>Markerless AR + Toggle Camera</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta charset="UTF-8">
+  <title>AR Debug Page</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.3/aframe/build/aframe-ar.js"></script>
   <style>
-    body { margin:0; overflow:hidden; }
-    #controls {
-      position: absolute; top: 10px; left: 10px; z-index: 10;
-      display: flex; gap: 10px;
-    }
-    button {
-      padding: 8px 14px; border: none; border-radius: 6px;
-      background: #007bff; color: #fff; font-size: 14px;
-    }
+    body { font-family: monospace; background: #111; color: #0f0; padding: 10px; }
+    #log { white-space: pre-wrap; background: #222; padding: 10px; border-radius: 8px; }
+    button { margin: 10px 0; padding: 5px 15px; }
   </style>
 </head>
 <body>
-  <div id="controls">
-    <button id="startCam">เปิดกล้อง</button>
-    <button id="stopCam">ปิดกล้อง</button>
-  </div>
-
-  <a-scene embedded webxr="optionalFeatures: hit-test, local-floor;">
-    <a-entity id="cameraRig">
-      <a-camera id="camera"></a-camera>
-    </a-entity>
-
-    <a-entity id="modelRoot" visible="false" position="0 0 -1" scale="0.5 0.5 0.5">
-      <a-box color="orange" depth="0.5" height="0.5" width="0.5"></a-box>
-    </a-entity>
-  </a-scene>
+  <h2>🔍 AR Debug Console</h2>
+  <button onclick="checkPermissions()">ตรวจสอบสิทธิ์กล้อง</button>
+  <button onclick="startCamera()">เปิดกล้อง</button>
+  <button onclick="stopCamera()">ปิดกล้อง</button>
+  
+  <div id="log">[Log จะมาแสดงตรงนี้]</div>
 
   <script>
-    const scene = document.querySelector("a-scene");
-    const modelRoot = document.getElementById("modelRoot");
+    const logBox = document.getElementById("log");
+    function log(msg) {
+      console.log(msg);
+      logBox.textContent += `\n${msg}`;
+    }
 
-    // ปุ่มเปิดกล้อง
-    document.getElementById("startCam").addEventListener("click", async () => {
+    // ✅ Step 1: ตรวจสอบ HTTPS
+    if (location.protocol !== "https:") {
+      log("❌ ต้องใช้ HTTPS (ตอนนี้คือ " + location.protocol + ")");
+    } else {
+      log("✅ HTTPS พร้อมใช้งาน");
+    }
+
+    // ✅ Step 2: ตรวจสอบ WebXR
+    if (navigator.xr) {
+      log("✅ WebXR รองรับใน Browser นี้");
+    } else {
+      log("❌ Browser นี้ไม่รองรับ WebXR");
+    }
+
+    // ✅ Step 3: ตรวจสอบสิทธิ์กล้อง
+    async function checkPermissions() {
       try {
-        await scene.enterVR(); // trigger AR/VR session → เปิดกล้อง
-        console.log("Camera started");
-      } catch (err) {
-        console.error("ไม่สามารถเปิดกล้องได้:", err);
+        const status = await navigator.permissions.query({ name: "camera" });
+        log("📷 Camera permission state: " + status.state);
+      } catch (e) {
+        log("⚠️ ไม่สามารถตรวจสอบสิทธิ์กล้อง: " + e);
       }
-    });
+    }
 
-    // ปุ่มปิดกล้อง
-    document.getElementById("stopCam").addEventListener("click", () => {
-      if (scene.xrSession) {
-        scene.xrSession.end();
-        console.log("Camera stopped");
+    // ✅ Step 4: เปิดกล้อง
+    let stream;
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        log("✅ กล้องเปิดสำเร็จ");
+      } catch (e) {
+        log("❌ เปิดกล้องล้มเหลว: " + e.message);
       }
-    });
+    }
 
-    // แตะจอเพื่อวางกล่อง
-    let placed = false;
-    scene.addEventListener("click", () => {
-      if (!placed) {
-        modelRoot.setAttribute("visible", "true");
-        placed = true;
+    // ✅ Step 5: ปิดกล้อง
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        log("🛑 กล้องถูกปิดแล้ว");
+      } else {
+        log("⚠️ ยังไม่มีกล้องที่เปิดอยู่");
       }
-    });
+    }
   </script>
 </body>
 </html>
