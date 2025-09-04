@@ -2,14 +2,14 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>Markerless AR Debug - Primitive</title>
+  <title>Markerless AR Full Debug</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>
     body { margin:0; overflow:hidden; font-family:sans-serif; }
     #controls {
       position: absolute; top:10px; left:10px; z-index:10;
-      display:flex; gap:8px;
+      display:flex; gap:8px; flex-wrap: wrap;
     }
     button {
       padding:6px 12px; border-radius:6px; border:none; background:#007bff; color:#fff; font-size:14px;
@@ -30,9 +30,10 @@
   <div id="controls">
     <button id="startCam">เปิดกล้อง</button>
     <button id="stopCam">ปิดกล้อง</button>
+    <button id="switchCam">สลับกล้อง</button>
     <button id="checkDebug">Debug Status</button>
   </div>
-  <div id="hint">แตะหน้าจอเพื่อวางโมเดล • Pinch เพื่อขยาย / หมุนสองนิ้ว • ลากนิ้วเดียวเพื่อหมุน</div>
+  <div id="hint">แตะหน้าจอเพื่อวางโมเดล • Pinch เพื่อขยาย/หมุนสองนิ้ว • ลากนิ้วเดียวเพื่อหมุน</div>
   <div id="debugLog">[Debug log]</div>
 
   <a-scene embedded webxr="optionalFeatures: hit-test, local-floor;">
@@ -42,7 +43,7 @@
 
     <!-- โมเดลพื้นฐาน -->
     <a-box id="model" color="#FF0000" depth="0.5" height="0.5" width="0.5"
-           visible="false" position="0 0 -1"></a-box>
+           visible="true" position="0 0 -1"></a-box>
 
     <a-sky color="#222"></a-sky>
   </a-scene>
@@ -56,17 +57,29 @@
     const scene = document.querySelector('a-scene');
     let placed=false;
     let stream=null;
+    let usingFrontCamera = false; // false = กล้องหลัง, true = กล้องหน้า
 
     // -------------------------
-    // ปุ่มเปิดกล้อง
-    document.getElementById("startCam").addEventListener("click", async ()=>{
+    // ฟังก์ชันเปิดกล้อง
+    async function startCamera(front=false){
+      if(stream){
+        stream.getTracks().forEach(track=>track.stop());
+      }
+      const constraints = {
+        video: { facingMode: front ? "user" : { exact: "environment" } }
+      };
       try{
-        stream = await navigator.mediaDevices.getUserMedia({video:true});
-        log("✅ กล้องเปิดสำเร็จ");
-      }catch(e){ log("❌ เปิดกล้องล้มเหลว: "+e.message);}
-    });
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        usingFrontCamera = front;
+        log("✅ กล้อง "+(front?"หน้า":"หลัง")+" เปิดสำเร็จ");
+      }catch(e){
+        log("❌ เปิดกล้องล้มเหลว: "+e.message);
+      }
+    }
 
-    // ปุ่มปิดกล้อง
+    // -------------------------
+    // ปุ่มเปิด/ปิด/สลับกล้อง
+    document.getElementById("startCam").addEventListener("click", ()=>startCamera(usingFrontCamera));
     document.getElementById("stopCam").addEventListener("click", ()=>{
       if(stream){
         stream.getTracks().forEach(track=>track.stop());
@@ -74,14 +87,17 @@
         stream=null;
       }else log("⚠️ ยังไม่มีกล้องที่เปิดอยู่");
     });
+    document.getElementById("switchCam").addEventListener("click", ()=>{
+      startCamera(!usingFrontCamera);
+    });
 
+    // -------------------------
     // ปุ่ม debug
     document.getElementById("checkDebug").addEventListener("click", ()=>{
       log("---- DEBUG STATUS ----");
-      log("📷 Camera permission: "+(navigator.permissions ? "Supported" : "Not Supported"));
-      log("🔹 WebXR: "+(navigator.xr ? "Supported" : "Not Supported"));
-      log("🟢 Camera active: "+(stream ? "Yes" : "No"));
+      log("📷 Camera active: "+(stream ? "Yes" : "No"));
       log("🟥 Model visible: "+model.getAttribute("visible"));
+      log("🔹 WebXR: "+(navigator.xr ? "Supported" : "Not Supported"));
     });
 
     // -------------------------
@@ -90,7 +106,7 @@
       if(!placed){
         placeModel();
         placed=true;
-        model.setAttribute("visible","true");
+        log("🟥 Model placed and visible");
       }
     });
 
