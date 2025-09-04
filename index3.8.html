@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>A-Frame Click to Rotate glTF</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- โมเดล 3D -->
+      <a-entity id="model" gltf-model="scene.gltf" 
+                position="0 2 -5" 
+                scale="1 1 1" 
+                rotation="0 0 0"
+                animation__rotate="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear; startEvents: startSpin; pauseEvents: stopSpin">
+      </a-entity>
+
+      <!-- กล้อง + Cursor -->
+      <a-entity camera look-controls>
+        <a-cursor raycaster="objects: #model"></a-cursor>
+      </a-entity>
+
+      <script>
+        const model = document.querySelector('#model');
+        let spinning = false;
+        model.addEventListener('click', () => {
+          model.emit(spinning ? 'stopSpin' : 'startSpin');
+          spinning = !spinning;
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>

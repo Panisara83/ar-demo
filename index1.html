@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Hello A-Frame</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- วัตถุ -->
+      <a-box position="-1 1.5 -3" rotation="0 45 0" color="tomato"></a-box>
+      <a-sphere position="1 1.25 -3" radius="1.25" color="skyblue"></a-sphere>
+      <a-plane position="0 0 -4" rotation="-90 0 0" width="8" height="8" color="#7BC8A4"></a-plane>
+      
+      <!-- แสง -->
+      <a-light type="point" position="2 4 -3" intensity="1.5" color="white"></a-light>
+      <a-light type="ambient" color="#555"></a-light>
+      
+      <!-- กล้อง -->
+      <a-camera position="0 1.6 0"></a-camera>
+    </a-scene>
+  </body>
+</html>

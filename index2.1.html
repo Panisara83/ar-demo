@@ -1,0 +1,12 @@
+<canvas id="glCanvas" width="400" height="300"></canvas>
+<script>
+  const canvas = document.getElementById("glCanvas");
+  const gl = canvas.getContext("webgl");
+
+  if (!gl) {
+    alert("เบราว์เซอร์ไม่รองรับ WebGL");
+  } else {
+    gl.clearColor(0.2, 0.6, 0.9, 1.0); // กำหนดสีพื้นหลัง
+    gl.clear(gl.COLOR_BUFFER_BIT);      // ล้างหน้าจอด้วยสีที่กำหนด
+  }
+</script>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AR.js + A-Frame Example</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
+</head>
+<body style="margin:0; overflow:hidden;">
+  <a-scene embedded arjs>
+    <!-- Marker แบบ pattern -->
+    <a-marker type="pattern" url="myMarker.patt">
+      <!-- โมเดล 3D -->
+      <a-entity 
+        gltf-model="url(scene.gltf)" 
+        scale="0.5 0.5 0.5"
+        position="0 0 0"
+        rotation="270 0 0">
+      </a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+</body>
+</html>

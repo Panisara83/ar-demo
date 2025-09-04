@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>A-Frame Zoom Demo</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- แสง -->
+      <a-light type="ambient" intensity="0.5"></a-light>
+
+      <!-- วัตถุให้ดู -->
+      <a-box position="0 1 -5" color="tomato"></a-box>
+
+      <!-- กล้อง -->
+      <a-entity id="cam" camera look-controls position="0 1.6 0"></a-entity>
+
+      <script>
+        const cam = document.querySelector('#cam');
+        window.addEventListener('wheel', (e) => {
+          // e.deltaY > 0 เลื่อนลง (zoom out), < 0 เลื่อนขึ้น (zoom in)
+          cam.object3D.position.z += e.deltaY * 0.01;
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>

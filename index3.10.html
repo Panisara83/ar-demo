@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>A-Frame Load glTF Zoom</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- แสง -->
+      <a-light type="ambient" intensity="0.5"></a-light>
+
+      <!-- โมเดล 3D -->
+      <a-entity gltf-model="scene.gltf" 
+                position="0 2 -5" 
+                scale="1 1 1" 
+                rotation="0 0 0">
+      </a-entity>
+
+      <!-- กล้อง -->
+      <a-entity id="cam" camera look-controls position="0 1.6 0"></a-entity>
+
+      <script>
+        const cam = document.querySelector('#cam');
+        window.addEventListener('wheel', e => {
+          cam.object3D.position.z += e.deltaY * 0.01; // เลื่อนเข้าหรือออก
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+<video id="video" autoplay playsinline></video>
+<script>
+  navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(stream => {
+      document.getElementById("video").srcObject = stream;
+    })
+    .catch(err => {
+      console.error("ไม่สามารถเข้าถึงกล้องได้:", err);
+    });
+</script>

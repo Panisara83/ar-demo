@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>A-Frame Click to Rotate + Zoom</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- แสง -->
+      <a-light type="ambient" intensity="0.5"></a-light>
+
+      <!-- โมเดล 3D พร้อม animation ที่เริ่ม/หยุดด้วย click -->
+      <a-entity id="model" gltf-model="scene.gltf" 
+                position="0 2 -5" 
+                scale="1 1 1" 
+                rotation="0 0 0"
+                animation__rotate="property: rotation; to:0 360 0; loop:true; dur:5000; easing:linear; startEvents:startSpin; pauseEvents:stopSpin">
+      </a-entity>
+
+      <!-- กล้อง + Cursor -->
+      <a-entity id="cam" camera look-controls position="0 1.6 0">
+        <a-cursor raycaster="objects: #model"></a-cursor>
+      </a-entity>
+
+      <script>
+        const model = document.querySelector('#model');
+        const cam = document.querySelector('#cam');
+        let spinning = false;
+
+        // คลิกเพื่อเริ่ม/หยุดหมุน
+        model.addEventListener('click', () => {
+          model.emit(spinning ? 'stopSpin' : 'startSpin');
+          spinning = !spinning;
+        });
+
+        // Scroll เพื่อซูมเข้า/ออก
+        window.addEventListener('wheel', e => {
+          cam.object3D.position.z += e.deltaY * 0.01;
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>

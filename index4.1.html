@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8">
+    <title>Markerless AR ง่าย ๆ</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body style="margin:0; overflow:hidden;">
+    <a-scene
+        xrweb
+        webxr="requiredFeatures: hit-test; optionalFeatures: local-floor;"
+        embedded>
+      
+      <!-- วัตถุ 3D -->
+      <a-box id="box" position="0 0 -1" rotation="0 45 0" color="#4CC3D9" scale="0.2 0.2 0.2"></a-box>
+      
+      <!-- กล้อง -->
+      <a-camera></a-camera>
+    </a-scene>
+
+    <script>
+      const box = document.querySelector('#box');
+      const scene = document.querySelector('a-scene');
+
+      // วาง box หน้ากล้องเมื่อแตะหน้าจอ
+      scene.addEventListener('click', () => {
+        const cam = scene.camera.el;
+        const camPos = cam.getAttribute('position');
+        box.setAttribute('position', {
+          x: camPos.x,
+          y: camPos.y - 0.5,
+          z: camPos.z - 1
+        });
+      });
+    </script>
+  </body>
+</html>
