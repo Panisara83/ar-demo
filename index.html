@@ -2,74 +2,103 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>AR Debug Page</title>
+  <title>Markerless AR - Duck Model</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.3/aframe/build/aframe-ar.js"></script>
   <style>
-    body { font-family: monospace; background: #111; color: #0f0; padding: 10px; }
-    #log { white-space: pre-wrap; background: #222; padding: 10px; border-radius: 8px; }
-    button { margin: 10px 0; padding: 5px 15px; }
+    body { margin:0; overflow:hidden; font-family: sans-serif; }
+    #hint {
+      position: absolute; left: 10px; right:10px; bottom: 12px;
+      background: rgba(0,0,0,0.6); color: #fff; padding:10px;
+      border-radius:8px; text-align:center; z-index: 10;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
-  <h2>🔍 AR Debug Console</h2>
-  <button onclick="checkPermissions()">ตรวจสอบสิทธิ์กล้อง</button>
-  <button onclick="startCamera()">เปิดกล้อง</button>
-  <button onclick="stopCamera()">ปิดกล้อง</button>
-  
-  <div id="log">[Log จะมาแสดงตรงนี้]</div>
+  <div id="hint">แตะหน้าจอเพื่อวางโมเดล • Pinch เพื่อขยาย / หมุนสองนิ้ว • ลากนิ้วเดียวเพื่อหมุน</div>
+
+  <a-scene embedded webxr="optionalFeatures: hit-test, local-floor;">
+    <a-entity id="cameraRig">
+      <a-camera id="camera"></a-camera>
+    </a-entity>
+
+    <!-- โมเดล Duck.gltf -->
+    <a-entity id="duckModel" visible="false" 
+              gltf-model="url(models/Duck.gltf)" 
+              scale="0.5 0.5 0.5" 
+              position="0 0 -1">
+    </a-entity>
+  </a-scene>
 
   <script>
-    const logBox = document.getElementById("log");
-    function log(msg) {
-      console.log(msg);
-      logBox.textContent += `\n${msg}`;
-    }
+    const scene = document.querySelector('a-scene');
+    const cameraEl = document.getElementById('camera');
+    const duck = document.getElementById('duckModel');
+    let placed = false;
 
-    // ✅ Step 1: ตรวจสอบ HTTPS
-    if (location.protocol !== "https:") {
-      log("❌ ต้องใช้ HTTPS (ตอนนี้คือ " + location.protocol + ")");
-    } else {
-      log("✅ HTTPS พร้อมใช้งาน");
-    }
-
-    // ✅ Step 2: ตรวจสอบ WebXR
-    if (navigator.xr) {
-      log("✅ WebXR รองรับใน Browser นี้");
-    } else {
-      log("❌ Browser นี้ไม่รองรับ WebXR");
-    }
-
-    // ✅ Step 3: ตรวจสอบสิทธิ์กล้อง
-    async function checkPermissions() {
-      try {
-        const status = await navigator.permissions.query({ name: "camera" });
-        log("📷 Camera permission state: " + status.state);
-      } catch (e) {
-        log("⚠️ ไม่สามารถตรวจสอบสิทธิ์กล้อง: " + e);
+    // วางโมเดลตรงหน้ากล้องเมื่อแตะ
+    scene.addEventListener('click', () => {
+      if (!placed) {
+        placeModelInFront();
+        placed = true;
+        duck.setAttribute('visible','true');
       }
+    });
+
+    function placeModelInFront() {
+      const camObj = cameraEl.object3D;
+      const worldPos = new THREE.Vector3();
+      const worldDir = new THREE.Vector3(0,0,-1);
+      camObj.getWorldPosition(worldPos);
+      camObj.getWorldDirection(worldDir);
+      const targetPos = worldPos.clone().add(worldDir.multiplyScalar(1));
+      targetPos.y = worldPos.y - 0.5;
+      duck.object3D.position.copy(targetPos);
     }
 
-    // ✅ Step 4: เปิดกล้อง
-    let stream;
-    async function startCamera() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        log("✅ กล้องเปิดสำเร็จ");
-      } catch (e) {
-        log("❌ เปิดกล้องล้มเหลว: " + e.message);
-      }
-    }
+    // Gesture: หมุน/ขยาย
+    let ongoing = {mode:null, startScale:1, startRotY:0, lastX:0, startDist:0, startAngle:0};
+    function dist(t1,t2){return Math.hypot(t1.clientX-t2.clientX,t1.clientY-t2.clientY);}
+    function angle(t1,t2){return Math.atan2(t2.clientY-t1.clientY,t2.clientX-t1.clientX)*180/Math.PI;}
 
-    // ✅ Step 5: ปิดกล้อง
-    function stopCamera() {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        log("🛑 กล้องถูกปิดแล้ว");
-      } else {
-        log("⚠️ ยังไม่มีกล้องที่เปิดอยู่");
+    window.addEventListener('touchstart',(e)=>{
+      if(!placed) return;
+      if(e.touches.length===1){
+        ongoing.mode='one';
+        ongoing.lastX=e.touches[0].clientX;
+        ongoing.startRotY=duck.getAttribute('rotation').y;
+      } else if(e.touches.length===2){
+        ongoing.mode='two';
+        ongoing.startDist=dist(e.touches[0],e.touches[1]);
+        ongoing.startScale=duck.getAttribute('scale').x;
+        ongoing.startRotY=duck.getAttribute('rotation').y;
+        ongoing.startAngle=angle(e.touches[0],e.touches[1]);
       }
-    }
+    },{passive:true});
+
+    window.addEventListener('touchmove',(e)=>{
+      if(!placed) return;
+      e.preventDefault();
+      if(ongoing.mode==='one' && e.touches.length===1){
+        const dx = e.touches[0].clientX - ongoing.lastX;
+        duck.setAttribute('rotation',{x:0,y:ongoing.startRotY - dx*0.3,z:0});
+      } else if(ongoing.mode==='two' && e.touches.length===2){
+        const newDist = dist(e.touches[0],e.touches[1]);
+        let scale = ongoing.startScale * (newDist / ongoing.startDist);
+        scale = Math.min(Math.max(scale,0.1),3);
+        duck.setAttribute('scale',`${scale} ${scale} ${scale}`);
+        const deltaAngle = angle(e.touches[0],e.touches[1]) - ongoing.startAngle;
+        duck.setAttribute('rotation',{x:0,y:ongoing.startRotY - deltaAngle,z:0});
+      }
+    },{passive:false});
+
+    window.addEventListener('touchend',()=>{ongoing.mode=null;});
+    window.addEventListener('touchcancel',()=>{ongoing.mode=null;});
+
+    // ตรวจสอบโหลดโมเดลสำเร็จ
+    duck.addEventListener('model-loaded',()=>console.log('✅ Duck model loaded'));
+    duck.addEventListener('model-error',(err)=>console.error('❌ Model load error:', err.detail));
   </script>
 </body>
 </html>
