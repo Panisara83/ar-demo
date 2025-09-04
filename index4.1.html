@@ -2,12 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Markerless AR with Camera Toggle</title>
+  <title>Markerless AR with Real-time Debug</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { margin:0; background:#222; display:flex; flex-direction:column; height:100vh; }
-    #controls { position:absolute; top:10px; left:10px; z-index:10; }
-    button { padding:6px 12px; border:none; border-radius:6px; background:#007bff; color:#fff; margin-right:5px; }
+    body { margin:0; font-family:sans-serif; background:#222; display:flex; flex-direction:column; height:100vh; }
+    #controls {
+      position:absolute; top:10px; left:10px; z-index:10; display:flex; gap:8px; flex-wrap: wrap;
+    }
+    button {
+      padding:6px 12px; border:none; border-radius:6px; background:#007bff; color:#fff; font-size:14px;
+    }
+    #debugLog {
+      position:absolute; top:50px; left:10px; max-height:200px; width:95%;
+      overflow:auto; background:rgba(0,0,0,0.6); color:#0f0; padding:10px;
+      border-radius:8px; font-family:monospace; font-size:12px; z-index:10;
+    }
     model-viewer { flex:1; width:100%; height:100%; }
   </style>
 </head>
@@ -15,7 +24,9 @@
 
 <div id="controls">
   <button id="toggleCam">Toggle Camera</button>
+  <button id="checkDebug">Debug Status</button>
 </div>
+<div id="debugLog">[Debug log]</div>
 
 <model-viewer id="mv"
               src="./scene.gltf"
@@ -28,41 +39,57 @@
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
 <script>
-const mv = document.getElementById('mv');
-let arActive = false;
+  const mv = document.getElementById('mv');
+  const logBox = document.getElementById('debugLog');
+  let arActive = false;
 
-// Toggle AR session (เปิด/ปิดกล้อง)
-document.getElementById('toggleCam').addEventListener('click', async () => {
-  if (!arActive) {
-    if (mv.canActivateAR) {
-      try {
-        await mv.activateAR(); // เปิด AR → กล้องหลัง
-        arActive = true;
-        console.log('📷 Camera ON (AR active)');
-      } catch(err) {
-        console.error('❌ AR activation failed:', err);
+  function log(msg){
+    console.log(msg);
+    logBox.textContent += "\n" + msg;
+    logBox.scrollTop = logBox.scrollHeight; // auto scroll
+  }
+
+  // โมเดลโหลดสำเร็จ
+  mv.addEventListener('load', () => log('✅ scene.gltf loaded successfully'));
+
+  // AR session status
+  mv.addEventListener('ar-status', e => log('🔹 AR status: ' + e.detail.status));
+
+  // Event error
+  mv.addEventListener('error', e => log('❌ ModelViewer error: ' + JSON.stringify(e.detail)));
+
+  // ปุ่ม Debug
+  document.getElementById('checkDebug').addEventListener('click', () => {
+    log("---- DEBUG STATUS ----");
+    log("📷 AR available: " + mv.canActivateAR);
+    log("🟥 Model src: " + mv.getAttribute('src'));
+  });
+
+  // ปุ่ม Toggle Camera
+  document.getElementById('toggleCam').addEventListener('click', async () => {
+    if (!arActive) {
+      if (mv.canActivateAR) {
+        try {
+          await mv.activateAR();
+          arActive = true;
+          log('📷 Camera ON (AR active)');
+        } catch(err) {
+          log('❌ AR activation failed: ' + err);
+        }
+      } else {
+        log('⚠ AR not available on this device/browser');
       }
     } else {
-      console.warn('AR not available on this device/browser');
+      try {
+        await mv.deactivateAR();
+        arActive = false;
+        log('📷 Camera OFF (AR deactivated)');
+      } catch(err) {
+        log('❌ AR deactivation failed: ' + err);
+      }
     }
-  } else {
-    try {
-      await mv.deactivateAR(); // ปิด AR → กล้องปิด
-      arActive = false;
-      console.log('📷 Camera OFF (AR deactivated)');
-    } catch(err) {
-      console.error('❌ AR deactivation failed:', err);
-    }
-  }
-});
-
-// Debug
-mv.addEventListener('load', () => console.log('✅ Model loaded'));
-mv.addEventListener('ar-status', e => console.log('🔹 AR status:', e.detail.status));
-mv.addEventListener('error', e => console.error('❌ ModelViewer error:', e.detail));
+  });
 </script>
 
 </body>
 </html>
-
-
