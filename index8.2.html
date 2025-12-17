@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AR Fullscreen Product Demo</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
+  <style>
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; }
+    #buyBtn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      font-size: 20px;
+      background-color: #FF6600;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      z-index: 999;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- ปุ่มสั่งซื้อ -->
+  <button id="buyBtn" onclick="buyProduct()">Buy Now</button>
+
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; antialias: true;"
+    arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+    style="width:100%; height:100%;"
+  >
+    <!-- Container สินค้า หมุนรอบตัวเอง -->
+    <a-entity id="product-container" position="0 0 -1" scale="0.7 0.7 0.7"
+              animation="property: rotation; to: 0 360 0; loop: true; dur: 5000">
+      <!-- โมเดล GLTF แทนสินค้า -->
+      <a-gltf-model src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF/Duck.gltf"
+                    position="0 0 0"
+                    rotation="0 0 0"
+                    scale="0.5 0.5 0.5">
+      </a-gltf-model>
+
+      <!-- ป้ายกำกับสินค้า -->
+      <a-text value="Premium Duck" position="0 1 0" align="center" color="#FFFFFF"></a-text>
+      <a-text value="$199" position="0 1.3 0" align="center" color="#FFFF00"></a-text>
+    </a-entity>
+
+    <!-- Camera -->
+    <a-camera position="0 0.5 0" look-controls></a-camera>
+  </a-scene>
+
+  <script>
+    function buyProduct() {
+      alert("Redirecting to checkout...");
+      window.location.href = "https://yourstore.com/checkout";
+    }
+  </script>
+</body>
+</html>

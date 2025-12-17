@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AR/VR IoT Dashboard</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+  <style>
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; }
+    #info {
+      position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.6); color: white; padding: 8px 12px;
+      border-radius: 6px; font-family: sans-serif; z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">AR/VR IoT Dashboard</div>
+
+  <a-scene embedded
+           vr-mode-ui="enabled: false"
+           arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+    
+    <!-- กล้องผู้ใช้ -->
+    <a-camera position="0 1 4" look-controls></a-camera>
+
+    <!-- แสง -->
+    <a-entity light="type: ambient; intensity: 0.5"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8" position="2 4 2"></a-entity>
+
+    <!-- พื้น -->
+    <a-plane rotation="-90 0 0" width="6" height="6" color="#444" material="side: double"></a-plane>
+
+    <!-- โมเดลต้นไม้ / IoT Node -->
+    <a-box id="tree1" position="-1 0.75 -2" depth="1" width="1" height="1.5" color="#00FF00"></a-box>
+    <a-text id="label1" value="Tree 1" position="-1 2.2 -2" align="center" color="#FFFFFF"></a-text>
+
+    <a-box id="tree2" position="1 0.75 -2" depth="1" width="1" height="1.5" color="#00FF00"></a-box>
+    <a-text id="label2" value="Tree 2" position="1 2.2 -2" align="center" color="#FFFFFF"></a-text>
+  </a-scene>
+
+  <script>
+    // จำลอง IoT + AI + Realtime DB
+    async function fetchIoTData() {
+      // สมมติเรียก Web API ที่เชื่อม IoT + AI + DB
+      // ในตัวอย่างนี้ใช้ค่า random แทน
+      return [
+        {moisture: Math.floor(Math.random() * 100)},
+        {moisture: Math.floor(Math.random() * 100)}
+      ];
+    }
+
+    function updateDashboard(data) {
+      data.forEach((node, i) => {
+        const tree = document.querySelector(`#tree${i+1}`);
+        const label = document.querySelector(`#label${i+1}`);
+        // กำหนดสีตามความชื้น (AI วิเคราะห์)
+        let color = node.moisture < 30 ? '#FF4500' : node.moisture < 70 ? '#FFFF00' : '#00FF00';
+        let height = 1 + node.moisture/50;
+        tree.setAttribute('color', color);
+        tree.setAttribute('height', height);
+        tree.setAttribute('position', {x: tree.object3D.position.x, y: height/2, z: tree.object3D.position.z});
+        label.setAttribute('value', `Tree ${i+1}: ${node.moisture}%`);
+      });
+      document.getElementById('info').innerText = `Realtime IoT Dashboard (AI-driven)`;
+    }
+
+    async function loop() {
+      const data = await fetchIoTData();
+      updateDashboard(data);
+      setTimeout(loop, 2000); // update ทุก 2 วินาที
+    }
+
+    loop();
+  </script>
+</body>
+</html>

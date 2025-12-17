@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>AR Atom with Orbiting Electrons</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+  </head>
+  <body style="margin:0; overflow:hidden;">
+    <a-scene
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+    >
+      <!-- Nucleus -->
+      <a-sphere 
+        id="nucleus"
+        position="0 1.5 -2" 
+        radius="0.3" 
+        color="#FF0000"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
+        shadow
+      ></a-sphere>
+      <a-text value="Nucleus" position="0 1.85 -2" align="center" color="#FFFFFF"></a-text>
+
+      <!-- Electron 1 orbit -->
+      <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 4000" position="0 1.5 -2">
+        <a-sphere position="0.5 0 0" radius="0.08" color="#0000FF"></a-sphere>
+        <a-text value="Electron 1" position="0.5 0.2 0" align="center" color="#FFFFFF"></a-text>
+      </a-entity>
+
+      <!-- Electron 2 orbit -->
+      <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 6000" position="0 1.5 -2">
+        <a-sphere position="-0.5 0 0" radius="0.08" color="#00FF00"></a-sphere>
+        <a-text value="Electron 2" position="-0.5 0.2 0" align="center" color="#FFFFFF"></a-text>
+      </a-entity>
+
+      <!-- Electron 3 orbit -->
+      <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 7000" position="0 1.5 -2">
+        <a-sphere position="0 0 0.5" radius="0.08" color="#FFFF00"></a-sphere>
+        <a-text value="Electron 3" position="0 0.2 0.5" align="center" color="#FFFFFF"></a-text>
+      </a-entity>
+
+      <!-- Electron 4 orbit -->
+      <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 5500" position="0 1.5 -2">
+        <a-sphere position="0 0 -0.5" radius="0.08" color="#FF00FF"></a-sphere>
+        <a-text value="Electron 4" position="0 0.2 -0.5" align="center" color="#FFFFFF"></a-text>
+      </a-entity>
+
+      <!-- Camera -->
+      <a-camera rotation-reader look-controls wasd-controls position="0 1.6 0"></a-camera>
+      
+    </a-scene>
+  </body>
+</html>
